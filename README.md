@@ -138,3 +138,46 @@ WHERE DEA.continent IS NOT NULL;
 
 SELECT *
 FROM percpopvac;
+
+
+CREATE VIEW TotalDeathCount AS
+Select location, SUM(cast(new_deaths as int)) as TotalDeathCount
+From CovidDeaths
+Where continent is null 
+and location not in ('World', 'European Union', 'International')
+Group by location
+;
+
+CREATE VIEW DeathPercentage AS
+SELECT 
+    SUM(new_cases) AS total_cases,
+    SUM(CAST(new_deaths AS INT)) AS total_deaths,
+    CASE 
+        WHEN SUM(new_cases) = 0 THEN NULL 
+        ELSE SUM(CAST(new_deaths AS INT)) * 100.0 / SUM(new_cases) 
+    END AS DeathPercentage
+FROM [Covid 19]..CovidDeaths
+WHERE continent IS NOT NULL;
+
+CREATE VIEW HighestInfectionCount_Vs_PercentPopulationInfected AS
+Select Location, Population, MAX(total_cases) as HighestInfectionCount,  
+Max((total_cases/population))*100 as PercentPopulationInfected
+From CovidDeaths
+Group by Location, Population;
+
+
+CREATE VIEW HighestInfectionCount_ AS
+Select Location, Population,date, MAX(total_cases) as HighestInfectionCount,  
+Max((total_cases/population))*100 as PercentPopulationInfected
+From CovidDeaths
+Group by Location, Population, date;
+
+Create View PeopleVaccinated AS
+Select dea.continent, dea.location, dea.date, dea.population
+, MAX(vac.total_vaccinations) as RollingPeopleVaccinated
+From CovidDeaths dea
+Join CovidVaccinations vac
+	On dea.location = vac.location
+	and dea.date = vac.date
+where dea.continent is not null 
+group by dea.continent, dea.location, dea.date, dea.population;
